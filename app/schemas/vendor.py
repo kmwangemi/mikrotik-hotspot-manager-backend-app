@@ -8,7 +8,7 @@ class VendorAdminInfo(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    phone: Optional[str] = None
+    phone_number: Optional[str] = None
     password: str
 
 
@@ -16,7 +16,7 @@ class VendorCreate(BaseModel):
     # Business info
     business_name: str
     business_email: EmailStr
-    business_phone: Optional[str] = None
+    business_phone_number: Optional[str] = None
     business_address: Optional[str] = None
     # Admin user info
     admin: VendorAdminInfo
@@ -24,7 +24,7 @@ class VendorCreate(BaseModel):
 
 class VendorUpdate(BaseModel):
     business_name: Optional[str] = None
-    business_phone: Optional[str] = None
+    business_phone_number: Optional[str] = None
     business_address: Optional[str] = None
     logo_url: Optional[str] = None
 
@@ -38,7 +38,7 @@ class VendorRead(BaseModel):
     id: str
     business_name: str
     business_email: str
-    business_phone: Optional[str] = None
+    business_phone_number: Optional[str] = None
     business_address: Optional[str] = None
     logo_url: Optional[str] = None
     status: VendorStatus

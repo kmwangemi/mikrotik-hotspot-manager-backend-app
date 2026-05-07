@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
 from typing import List
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -8,27 +9,22 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     ALLOWED_ORIGINS: str = "http://localhost:3000"
-
     # Database
-    DATABASE_URL: str
-    SYNC_DATABASE_URL: str
-
+    DATABASE_URL: str  # asyncpg — used by the app
+    SYNC_DATABASE_URL: str  # psycopg2 — used by Alembic only
     # JWT
     SECRET_KEY: str
     REFRESH_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
-
     # Email
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = "noreply@example.com"
-
     # Upload
-    UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE_MB: int = 5
 
     @property

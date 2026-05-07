@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr, field_validator
+
 from app.core.enums import UserRole
 
 
@@ -8,7 +10,7 @@ class UserBase(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    phone: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -26,7 +28,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    phone: Optional[str] = None
+    phone_number: Optional[str] = None
     profile_picture_url: Optional[str] = None
 
 
@@ -60,4 +62,4 @@ class SuperAdminCreate(BaseModel):
     password: str
     first_name: str
     last_name: str
-    phone: Optional[str] = None
+    phone_number: Optional[str] = None

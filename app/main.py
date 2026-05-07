@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-import os
 
-from app.core.config import settings
 from app.api.v1.router import api_router
+from app.core.config import settings
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -23,10 +21,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Static files for profile pictures
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory=settings.UPLOAD_DIR), name="static")
 
 # Routes
 app.include_router(api_router)

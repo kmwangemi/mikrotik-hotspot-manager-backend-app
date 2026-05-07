@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from jose import JWTError
 
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
@@ -12,11 +11,13 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
-from app.core.enums import TokenType, UserRole
+from app.core.enums import TokenType
 from app.core.config import settings
 
 
-async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
+async def authenticate_user(
+    db: AsyncSession, email: str, password: str
+) -> Optional[User]:
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(password, user.hashed_password):
@@ -35,9 +36,9 @@ async def create_token_pair(
     data = {"sub": user.id, "role": user.role.value, "email": user.email}
     access_token = create_access_token(data)
     refresh_token = create_refresh_token(data)
-
-    # Persist refresh token
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
     db_token = RefreshToken(
         user_id=user.id,
         token=refresh_token,
@@ -53,11 +54,8 @@ async def create_token_pair(
 async def refresh_access_token(
     db: AsyncSession, refresh_token: str
 ) -> Tuple[str, User]:
-    try:
-        payload = decode_token(refresh_token, TokenType.REFRESH)
-    except JWTError:
-        raise ValueError("Invalid or expired refresh token")
-
+    # decode_token raises HTTPException on any JWT failure (expired, invalid, wrong type)
+    payload = decode_token(refresh_token, TokenType.REFRESH)
     result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.token == refresh_token,
@@ -69,12 +67,10 @@ async def refresh_access_token(
         raise ValueError("Refresh token not found or revoked")
     if db_token.expires_at < datetime.now(timezone.utc):
         raise ValueError("Refresh token expired")
-
     user_result = await db.execute(select(User).where(User.id == payload["sub"]))
     user = user_result.scalar_one_or_none()
     if not user or not user.is_active:
         raise ValueError("User not found or inactive")
-
     data = {"sub": user.id, "role": user.role.value, "email": user.email}
     new_access_token = create_access_token(data)
     return new_access_token, user

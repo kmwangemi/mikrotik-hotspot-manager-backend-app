@@ -2,17 +2,19 @@
 Seed script: Creates the initial superadmin user.
 Run with: uv run python -m scripts.seed
 """
+
 import asyncio
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import select
+
+from app.core.enums import UserRole
+from app.core.security import hash_password
 from app.db.session import AsyncSessionLocal
 from app.models.user import User
-from app.core.security import hash_password
-from app.core.enums import UserRole
 
 SUPERADMIN_EMAIL = "admin@mikrotik.local"
 SUPERADMIN_PASSWORD = "Admin@1234!"  # Change immediately after first login
@@ -39,7 +41,9 @@ async def seed():
         )
         db.add(admin)
         await db.commit()
-        print(f"[SEED] ✅ Superadmin created: {SUPERADMIN_EMAIL} / {SUPERADMIN_PASSWORD}")
+        print(
+            f"[SEED] ✅ Superadmin created: {SUPERADMIN_EMAIL} / {SUPERADMIN_PASSWORD}"
+        )
         print("[SEED] ⚠️  Please change the password immediately after first login!")
 
 
