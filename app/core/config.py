@@ -1,0 +1,43 @@
+from pydantic_settings import BaseSettings
+from typing import List
+
+
+class Settings(BaseSettings):
+    # App
+    APP_NAME: str = "MikroTik Hotspot Manager"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = False
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
+    # Database
+    DATABASE_URL: str
+    SYNC_DATABASE_URL: str
+
+    # JWT
+    SECRET_KEY: str
+    REFRESH_SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ALGORITHM: str = "HS256"
+
+    # Email
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM: str = "noreply@example.com"
+
+    # Upload
+    UPLOAD_DIR: str = "uploads"
+    MAX_FILE_SIZE_MB: int = 5
+
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+settings = Settings()
