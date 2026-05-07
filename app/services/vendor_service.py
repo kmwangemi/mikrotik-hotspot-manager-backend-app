@@ -14,7 +14,7 @@ async def create_vendor(db: AsyncSession, data: VendorCreate) -> Tuple[Vendor, U
     vendor = Vendor(
         business_name=data.business_name,
         business_email=data.business_email,
-        business_phone=data.business_phone,
+        business_phone_number=data.business_phone_number,
         business_address=data.business_address,
         status=VendorStatus.ACTIVE,
     )
@@ -26,7 +26,7 @@ async def create_vendor(db: AsyncSession, data: VendorCreate) -> Tuple[Vendor, U
         hashed_password=hash_password(data.admin.password),
         first_name=data.admin.first_name,
         last_name=data.admin.last_name,
-        phone=data.admin.phone,
+        phone_number=data.admin.phone_number,
         role=UserRole.VENDOR,
         is_email_verified=True,
         vendor_id=vendor.id,

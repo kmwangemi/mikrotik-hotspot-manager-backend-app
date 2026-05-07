@@ -44,7 +44,7 @@ async def create_superadmin(
         hashed_password=hash_password(body.password),
         first_name=body.first_name,
         last_name=body.last_name,
-        phone=body.phone,
+        phone_number=body.phone_number,
         role=UserRole.SUPERADMIN,
         is_email_verified=True,
     )
