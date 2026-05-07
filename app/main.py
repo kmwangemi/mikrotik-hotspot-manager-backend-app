@@ -21,9 +21,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="MikroTik Hotspot ISP Management Platform API",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS
@@ -45,7 +43,7 @@ async def root():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "running",
-        "docs": "/api/docs",
+        "docs": "/docs",
     }
 
 
