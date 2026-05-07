@@ -1,8 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.scheduler import start_scheduler, stop_scheduler
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print(f"[STARTUP] {settings.APP_NAME} v{settings.APP_VERSION} starting...")
+    start_scheduler()
+    yield
+    stop_scheduler()
+    print(f"[SHUTDOWN] {settings.APP_NAME} shut down")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
