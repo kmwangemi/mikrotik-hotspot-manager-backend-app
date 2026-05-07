@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str  # asyncpg — used by the app
     SYNC_DATABASE_URL: str  # psycopg2 — used by Alembic only
+    BASE_URL: str = "http://localhost:8000"
     # JWT
     SECRET_KEY: str
     REFRESH_SECRET_KEY: str
@@ -26,6 +27,11 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@example.com"
     # Upload
     MAX_FILE_SIZE_MB: int = 5
+    # Admin Credentials
+    SUPERADMIN_EMAIL: str
+    SUPERADMIN_PASSWORD: str
+    SUPERADMIN_FIRST_NAME: str = "Super"
+    SUPERADMIN_LAST_NAME: str = "Admin"
 
     @property
     def allowed_origins_list(self) -> List[str]:
