@@ -1,15 +1,15 @@
-import os
-import uuid
-import aiofiles
-from fastapi import APIRouter, HTTPException, status, Request, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from app.api.v1.dependencies.auth import DB, CurrentUser, get_client_ip
+from app.core.config import settings
+from app.core.enums import LogCategory, LogStatus
 from app.schemas.user import UserRead, UserUpdate
 from app.services import user_service
+from app.services.cloudinary_service import (
+    delete_profile_picture,
+    upload_profile_picture,
+)
 from app.services.log_service import log_action
-from app.core.enums import LogCategory, LogStatus
-from app.core.config import settings
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
@@ -43,47 +43,39 @@ async def update_profile(
 
 
 @router.post("/picture", response_model=UserRead)
-async def upload_profile_picture(
+async def upload_profile_picture_route(
     current_user: CurrentUser,
     db: DB,
     request: Request,
     file: UploadFile = File(...),
 ):
     ip = get_client_ip(request)
-
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}",
         )
-
-    max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
     content = await file.read()
+    max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
     if len(content) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"File too large. Max size is {settings.MAX_FILE_SIZE_MB}MB",
         )
-
-    # Save file
-    upload_dir = os.path.join(settings.UPLOAD_DIR, "profile_pictures")
-    os.makedirs(upload_dir, exist_ok=True)
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
-    filename = f"{current_user.id}_{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(upload_dir, filename)
-
-    async with aiofiles.open(filepath, "wb") as f:
-        await f.write(content)
-
-    url = f"/static/profile_pictures/{filename}"
+    try:
+        url = await upload_profile_picture(content, current_user.id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload image: {str(e)}",
+        )
     user = await user_service.update_profile_picture(db, current_user, url)
-
     await log_action(
         db,
         action="Updated Profile Picture",
         category=LogCategory.PROFILE,
         status=LogStatus.SUCCESS,
-        details="Profile picture uploaded and updated",
+        details="Profile picture uploaded to Cloudinary",
         user=current_user,
         ip_address=ip,
     )
@@ -97,12 +89,17 @@ async def remove_profile_picture(
     request: Request,
 ):
     ip = get_client_ip(request)
+    try:
+        await delete_profile_picture(current_user.id)
+    except Exception:
+        pass  # Don't block the DB update if Cloudinary delete fails
     user = await user_service.update_profile_picture(db, current_user, None)
     await log_action(
         db,
         action="Removed Profile Picture",
         category=LogCategory.PROFILE,
         status=LogStatus.SUCCESS,
+        details="Profile picture removed from Cloudinary",
         user=current_user,
         ip_address=ip,
     )

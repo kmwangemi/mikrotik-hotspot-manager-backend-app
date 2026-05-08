@@ -1,18 +1,18 @@
-import math
 import csv
 import io
-from fastapi import APIRouter, Query
-from fastapi.responses import StreamingResponse
-from sqlalchemy import select, func, and_
-from sqlalchemy.orm import selectinload
+import math
 from typing import Optional
 
-from app.api.v1.dependencies.auth import DB, SuperAdminUser
-from app.models.activity_log import ActivityLog
-from app.schemas.activity_log import PaginatedLogs, ActivityLogRead
-from app.core.enums import LogCategory, LogStatus
+from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
+from sqlalchemy import and_, func, select
 
-router = APIRouter(prefix="/logs", tags=["Activity Logs"])
+from app.api.v1.dependencies.auth import DB, SuperAdminUser
+from app.core.enums import LogCategory, LogStatus
+from app.models.activity_log import ActivityLog
+from app.schemas.activity_log import PaginatedLogs
+
+router = APIRouter(prefix="/logs", tags=["Superadmin - Activity Logs"])
 
 
 @router.get("", response_model=PaginatedLogs)
@@ -39,13 +39,11 @@ async def list_logs(
         filters.append(ActivityLog.category == category)
     if log_status:
         filters.append(ActivityLog.status == log_status)
-
     count_query = select(func.count()).select_from(ActivityLog)
     if filters:
         count_query = count_query.where(and_(*filters))
     total_result = await db.execute(count_query)
     total = total_result.scalar_one()
-
     query = select(ActivityLog)
     if filters:
         query = query.where(and_(*filters))
@@ -53,7 +51,6 @@ async def list_logs(
     offset = (page - 1) * page_size
     result = await db.execute(query.offset(offset).limit(page_size))
     logs = result.scalars().all()
-
     return PaginatedLogs(
         items=logs,
         total=total,
@@ -76,36 +73,41 @@ async def export_logs(
         filters.append(ActivityLog.category == category)
     if log_status:
         filters.append(ActivityLog.status == log_status)
-
     query = select(ActivityLog).order_by(ActivityLog.created_at.desc())
     if filters:
         query = query.where(and_(*filters))
-
     result = await db.execute(query)
     logs = result.scalars().all()
-
     output = io.StringIO()
     writer = csv.DictWriter(
         output,
         fieldnames=[
-            "id", "timestamp", "user_name", "user_email",
-            "action", "category", "status", "details", "ip_address",
+            "id",
+            "timestamp",
+            "user_name",
+            "user_email",
+            "action",
+            "category",
+            "status",
+            "details",
+            "ip_address",
         ],
     )
     writer.writeheader()
     for log in logs:
-        writer.writerow({
-            "id": log.id,
-            "timestamp": log.created_at.isoformat(),
-            "user_name": log.user_name or "",
-            "user_email": log.user_email or "",
-            "action": log.action,
-            "category": log.category.value,
-            "status": log.status.value,
-            "details": log.details or "",
-            "ip_address": log.ip_address or "",
-        })
-
+        writer.writerow(
+            {
+                "id": log.id,
+                "timestamp": log.created_at.isoformat(),
+                "user_name": log.user_name or "",
+                "user_email": log.user_email or "",
+                "action": log.action,
+                "category": log.category.value,
+                "status": log.status.value,
+                "details": log.details or "",
+                "ip_address": log.ip_address or "",
+            }
+        )
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),

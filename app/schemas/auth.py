@@ -1,7 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
-from app.core.enums import UserRole
-
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -11,9 +9,6 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
-    role: UserRole
-    user_id: str
 
 
 class RefreshTokenRequest(BaseModel):

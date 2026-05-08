@@ -1,9 +1,10 @@
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.models.user import User
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.security import hash_password, verify_password
+from app.models.user import User
 from app.schemas.user import UserUpdate
 
 
@@ -35,7 +36,7 @@ async def update_user_password(
 
 
 async def update_profile_picture(
-    db: AsyncSession, user: User, url: str
+    db: AsyncSession, user: User, url: Optional[str]
 ) -> User:
     user.profile_picture_url = url
     await db.flush()

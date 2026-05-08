@@ -1,10 +1,13 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
 from app.core.enums import RouterStatus
 
 
 class RouterCreate(BaseModel):
+    vendor_id: str  # superadmin specifies which vendor this router belongs to
     name: str
     ip_address: str
     port: int = 8728

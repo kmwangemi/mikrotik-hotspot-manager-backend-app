@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     SUPERADMIN_PASSWORD: str
     SUPERADMIN_FIRST_NAME: str = "Super"
     SUPERADMIN_LAST_NAME: str = "Admin"
+    # Cloudinary
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
 
     @property
     def allowed_origins_list(self) -> List[str]:

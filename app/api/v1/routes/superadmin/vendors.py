@@ -18,7 +18,7 @@ from app.schemas.vendor import (
 from app.services import vendor_service
 from app.services.log_service import log_action
 
-router = APIRouter(prefix="/vendors", tags=["Vendors"])
+router = APIRouter(prefix="/vendors", tags=["Superadmin - Vendors"])
 
 
 @router.post("", response_model=VendorRead, status_code=status.HTTP_201_CREATED)
@@ -31,17 +31,10 @@ async def create_vendor(
     ip = get_client_ip(request)
     try:
         vendor, admin = await vendor_service.create_vendor(db, body)
-    except Exception as e:
-        await log_action(
-            db,
-            action="Create Vendor Failed",
-            category=LogCategory.VENDOR_MANAGEMENT,
-            status=LogStatus.ERROR,
-            details=str(e),
-            user=current_user,
-            ip_address=ip,
-        )
+    except ValueError as e:
+        # ValueError is raised before any DB writes so the session is still clean
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    # Only reached on success — session is healthy, safe to log
     await log_action(
         db,
         action="Created New Vendor",

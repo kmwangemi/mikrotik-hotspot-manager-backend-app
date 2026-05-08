@@ -1,25 +1,36 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.models.user import User
-from app.models.refresh_token import RefreshToken
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.core.enums import TokenType
 from app.core.security import (
-    verify_password,
     create_access_token,
     create_refresh_token,
     decode_token,
+    verify_password,
 )
-from app.core.enums import TokenType
-from app.core.config import settings
+from app.models.refresh_token import RefreshToken
+from app.models.user import User
+from app.models.vendor import Vendor
 
 
 async def authenticate_user(
     db: AsyncSession, email: str, password: str
 ) -> Optional[User]:
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    # First try personal email
+    personal_result = await db.execute(select(User).where(User.email == email))
+    user = personal_result.scalar_one_or_none()
+    # If not found, try vendor business email
+    if not user:
+        vendor_result = await db.execute(
+            select(User)
+            .join(Vendor, User.vendor_id == Vendor.id)
+            .where(Vendor.business_email == email)
+        )
+        user = vendor_result.scalar_one_or_none()
     if not user or not verify_password(password, user.hashed_password):
         return None
     if not user.is_active:
@@ -32,8 +43,9 @@ async def create_token_pair(
     user: User,
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
+    subdomain: Optional[str] = None,
 ) -> Tuple[str, str]:
-    data = {"sub": user.id, "role": user.role.value}
+    data = {"sub": user.id, "role": user.role.value, "subdomain": subdomain}
     access_token = create_access_token(data)
     refresh_token = create_refresh_token(data)
     expires_at = datetime.now(timezone.utc) + timedelta(

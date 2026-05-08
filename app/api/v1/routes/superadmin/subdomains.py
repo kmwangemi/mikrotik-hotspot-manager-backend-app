@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from app.api.v1.dependencies.auth import DB
 from app.services import vendor_service
 
-router = APIRouter(prefix="/subdomains", tags=["Subdomains"])
+router = APIRouter(prefix="/subdomains", tags=["Superadmin - Subdomains"])
 
 
 @router.get("/check")
