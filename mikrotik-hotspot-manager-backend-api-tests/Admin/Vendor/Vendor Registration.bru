@@ -1,0 +1,31 @@
+meta {
+  name: Vendor Registration
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{local_url}}/vendors
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+body:json {
+  {
+    "business_name": "pelvin tech",
+    "business_email": "pelvintech@gmail.com",
+    "business_phone_number": "254706612345",
+    "business_address": "Nairobi,Kenya",
+    "admin": {
+      "first_name": "Kelvin",
+      "last_name": "Mwangemi",
+      "email": "mwangemik@gmail.com",
+      "phone_number": "254706612345",
+      "password": "Test@123!"
+    }
+  }
+}

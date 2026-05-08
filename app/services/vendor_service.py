@@ -15,6 +15,8 @@ async def create_vendor(db: AsyncSession, data: VendorCreate) -> Tuple[Vendor, U
         business_name=data.business_name,
         business_email=data.business_email,
         business_phone_number=data.business_phone_number,
+        subdomain=data.subdomain,
+        referral_code=data.referral_code,
         business_address=data.business_address,
         status=VendorStatus.ACTIVE,
     )
@@ -95,3 +97,8 @@ async def update_vendor_status(
 async def delete_vendor(db: AsyncSession, vendor: Vendor) -> None:
     await db.delete(vendor)
     await db.flush()
+
+
+async def check_subdomain_exists(db: AsyncSession, subdomain: str) -> bool:
+    result = await db.execute(select(Vendor.id).where(Vendor.subdomain == subdomain))
+    return result.scalar_one_or_none() is not None
