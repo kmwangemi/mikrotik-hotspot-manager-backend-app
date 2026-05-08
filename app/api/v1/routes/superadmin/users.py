@@ -1,14 +1,14 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
 from app.api.v1.dependencies.auth import DB, SuperAdminUser, get_client_ip
-from app.models.user import User
-from app.schemas.user import UserRead, SuperAdminCreate
-from app.services.log_service import log_action
-from app.core.security import hash_password
 from app.core.enums import LogCategory, LogStatus, UserRole
+from app.core.security import hash_password
+from app.models.user import User
+from app.schemas.user import SuperAdminCreate, UserRead
+from app.services.log_service import log_action
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/users", tags=["Superadmin - Users"])
 
 
 @router.get("", response_model=list[UserRead])
@@ -22,11 +22,15 @@ async def get_user(user_id: str, current_user: SuperAdminUser, db: DB):
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return user
 
 
-@router.post("/superadmin", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/superadmin", response_model=UserRead, status_code=status.HTTP_201_CREATED
+)
 async def create_superadmin(
     body: SuperAdminCreate,
     current_user: SuperAdminUser,
@@ -34,11 +38,9 @@ async def create_superadmin(
     request: Request,
 ):
     ip = get_client_ip(request)
-    # Check if email exists
-    result = await db.execute(select(User).where(User.email == body.email))
-    if result.scalar_one_or_none():
+    existing = await db.execute(select(User.id).where(User.email == body.email))
+    if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
-
     new_admin = User(
         email=body.email,
         hashed_password=hash_password(body.password),
@@ -50,7 +52,6 @@ async def create_superadmin(
     )
     db.add(new_admin)
     await db.flush()
-
     await log_action(
         db,
         action="Created Superadmin User",
@@ -78,7 +79,6 @@ async def deactivate_user(
         raise HTTPException(status_code=404, detail="User not found")
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
-
     user.is_active = False
     await db.flush()
     await log_action(
@@ -106,7 +106,6 @@ async def activate_user(
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
     user.is_active = True
     await db.flush()
     await log_action(

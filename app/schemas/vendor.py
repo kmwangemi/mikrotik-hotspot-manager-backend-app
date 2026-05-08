@@ -1,13 +1,16 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+import re
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr, field_validator
+
 from app.core.enums import VendorStatus
 
 
 class VendorAdminInfo(BaseModel):
     first_name: str
     last_name: str
-    email: EmailStr
+    email: Optional[str] = None
     phone_number: Optional[str] = None
     password: str
 
@@ -22,6 +25,23 @@ class VendorCreate(BaseModel):
     business_address: Optional[str] = None
     # Admin user info
     admin: VendorAdminInfo
+
+    @field_validator("subdomain")
+    @classmethod
+    def validate_subdomain(cls, v: str) -> str:
+        v = v.strip().lower()
+        if len(v) < 3:
+            raise ValueError("Subdomain must be at least 3 characters")
+        if len(v) > 50:
+            raise ValueError("Subdomain must not exceed 50 characters")
+        if not re.match(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$", v):
+            raise ValueError(
+                "Subdomain may only contain lowercase letters, numbers, and hyphens, "
+                "and cannot start or end with a hyphen"
+            )
+        if "--" in v:
+            raise ValueError("Subdomain cannot contain consecutive hyphens")
+        return v
 
 
 class VendorUpdate(BaseModel):

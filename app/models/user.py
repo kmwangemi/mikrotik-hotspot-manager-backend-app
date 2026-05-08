@@ -23,13 +23,15 @@ class User(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    phone_number: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(
+        String(255), unique=True, nullable=True, index=True
+    )
+    phone_number: Mapped[Optional[str]] = mapped_column(
+        String(30), unique=True, nullable=True, index=True
+    )
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     profile_picture_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     role: Mapped[UserRole] = mapped_column(
         SAEnum(

@@ -26,12 +26,21 @@ async def get_current_user(
         )
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    if not user or not user.is_active:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been deactivated. Contact support.",
+        )
+    # Attach token claims to the user object so routes can use them
+    # without extra DB queries
+    user.token_subdomain = payload.get("subdomain")
+    user.token_jti = payload.get("jti")
     return user
 
 
@@ -70,7 +79,6 @@ def require_permission(permission: Permission):
                 detail=f"Permission '{permission.value}' required",
             )
         return current_user
-
     return check_permission
 
 

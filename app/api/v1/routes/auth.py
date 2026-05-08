@@ -15,7 +15,7 @@ from app.schemas.auth import (
     VerifyOTPResponse,
 )
 from app.schemas.user import UserPublic
-from app.services import auth_service, email_service, user_service
+from app.services import auth_service, email_service, user_service, vendor_service
 from app.services.log_service import log_action
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -41,13 +41,20 @@ async def login(body: LoginRequest, request: Request, db: DB):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
-    access_token, refresh_token = await auth_service.create_token_pair(db, user, ip, ua)
+    # Fetch subdomain for vendor users
+    subdomain = None
+    if user.vendor_id:
+        vendor = await vendor_service.get_vendor(db, user.vendor_id)
+        subdomain = vendor.subdomain if vendor else None
+    access_token, refresh_token = await auth_service.create_token_pair(
+        db, user, ip, ua, subdomain=subdomain
+    )
     await log_action(
         db,
         action="User Login",
         category=LogCategory.AUTH,
         status=LogStatus.SUCCESS,
-        details=f"Successful login",
+        details="Successful login",
         user=user,
         ip_address=ip,
         user_agent=ua,
@@ -55,8 +62,6 @@ async def login(body: LoginRequest, request: Request, db: DB):
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        role=user.role,
-        user_id=user.id,
     )
 
 
