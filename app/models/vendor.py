@@ -27,9 +27,13 @@ class Vendor(Base, TimestampMixin):
     business_email: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
-    business_phone_number: Mapped[Optional[str]] = mapped_column(
-        String(30), nullable=True
+    business_phone_number: Mapped[str] = mapped_column(
+        String(30), unique=True, nullable=False, index=True
     )
+    subdomain: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False, index=True
+    )
+    referral_code: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     business_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     logo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[VendorStatus] = mapped_column(

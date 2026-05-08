@@ -33,7 +33,7 @@ async def create_token_pair(
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
 ) -> Tuple[str, str]:
-    data = {"sub": user.id, "role": user.role.value, "email": user.email}
+    data = {"sub": user.id, "role": user.role.value}
     access_token = create_access_token(data)
     refresh_token = create_refresh_token(data)
     expires_at = datetime.now(timezone.utc) + timedelta(

@@ -39,7 +39,6 @@ def create_token(
     else:
         secret = settings.REFRESH_SECRET_KEY
         default_expire = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
     expire = datetime.now(timezone.utc) + (expires_delta or default_expire)
     to_encode.update(
         {
@@ -80,7 +79,6 @@ def decode_token(token: str, token_type: TokenType) -> dict[str, Any]:
             detail="Invalid authentication token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     if payload.get("type") != token_type.value:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

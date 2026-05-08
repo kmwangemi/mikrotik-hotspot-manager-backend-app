@@ -1,23 +1,22 @@
-from fastapi import APIRouter, HTTPException, status, Request, Depends
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Request, status
 
 from app.api.v1.dependencies.auth import DB, CurrentUser, get_client_ip, get_user_agent
+from app.core.enums import LogCategory, LogStatus
 from app.schemas.auth import (
-    LoginRequest,
-    TokenResponse,
-    RefreshTokenRequest,
     AccessTokenResponse,
+    ChangePasswordRequest,
+    LoginRequest,
+    LogoutResponse,
+    RefreshTokenRequest,
     SendOTPRequest,
     SendOTPResponse,
+    TokenResponse,
     VerifyOTPRequest,
     VerifyOTPResponse,
-    ChangePasswordRequest,
-    LogoutResponse,
 )
 from app.schemas.user import UserPublic
 from app.services import auth_service, email_service, user_service
 from app.services.log_service import log_action
-from app.core.enums import LogCategory, LogStatus
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -26,7 +25,6 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 async def login(body: LoginRequest, request: Request, db: DB):
     ip = get_client_ip(request)
     ua = get_user_agent(request)
-
     user = await auth_service.authenticate_user(db, body.email, body.password)
     if not user:
         await log_action(
@@ -43,7 +41,6 @@ async def login(body: LoginRequest, request: Request, db: DB):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
-
     access_token, refresh_token = await auth_service.create_token_pair(db, user, ip, ua)
     await log_action(
         db,
@@ -66,14 +63,18 @@ async def login(body: LoginRequest, request: Request, db: DB):
 @router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh(body: RefreshTokenRequest, db: DB):
     try:
-        access_token, user = await auth_service.refresh_access_token(db, body.refresh_token)
+        access_token, user = await auth_service.refresh_access_token(
+            db, body.refresh_token
+        )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     return AccessTokenResponse(access_token=access_token)
 
 
 @router.post("/logout", response_model=LogoutResponse)
-async def logout(body: RefreshTokenRequest, current_user: CurrentUser, db: DB, request: Request):
+async def logout(
+    body: RefreshTokenRequest, current_user: CurrentUser, db: DB, request: Request
+):
     ip = get_client_ip(request)
     await auth_service.revoke_refresh_token(db, body.refresh_token)
     await log_action(

@@ -17,6 +17,8 @@ class VendorCreate(BaseModel):
     business_name: str
     business_email: EmailStr
     business_phone_number: Optional[str] = None
+    subdomain: str
+    referral_code: Optional[str] = None
     business_address: Optional[str] = None
     # Admin user info
     admin: VendorAdminInfo
@@ -25,6 +27,8 @@ class VendorCreate(BaseModel):
 class VendorUpdate(BaseModel):
     business_name: Optional[str] = None
     business_phone_number: Optional[str] = None
+    subdomain: Optional[str] = None
+    referral_code: Optional[str] = None
     business_address: Optional[str] = None
     logo_url: Optional[str] = None
 
@@ -39,6 +43,8 @@ class VendorRead(BaseModel):
     business_name: str
     business_email: str
     business_phone_number: Optional[str] = None
+    subdomain: str
+    referral_code: Optional[str] = None
     business_address: Optional[str] = None
     logo_url: Optional[str] = None
     status: VendorStatus

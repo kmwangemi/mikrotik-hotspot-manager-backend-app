@@ -1,20 +1,22 @@
 import math
-from fastapi import APIRouter, HTTPException, status, Request, Query
-from sqlalchemy import select
 
-from app.api.v1.dependencies.auth import DB, SuperAdminUser, get_client_ip, get_user_agent
+from fastapi import APIRouter, HTTPException, Query, Request, status
+
+from app.api.v1.dependencies.auth import (
+    DB,
+    SuperAdminUser,
+    get_client_ip,
+)
+from app.core.enums import LogCategory, LogStatus, VendorStatus
 from app.schemas.vendor import (
-    VendorCreate,
-    VendorUpdate,
-    VendorStatusUpdate,
-    VendorRead,
-    VendorWithAdmin,
     PaginatedVendors,
+    VendorCreate,
+    VendorRead,
+    VendorStatusUpdate,
+    VendorUpdate,
 )
 from app.services import vendor_service
 from app.services.log_service import log_action
-from app.core.enums import LogCategory, LogStatus, VendorStatus, Permission
-from app.api.v1.dependencies.auth import require_permission
 
 router = APIRouter(prefix="/vendors", tags=["Vendors"])
 
@@ -40,7 +42,6 @@ async def create_vendor(
             ip_address=ip,
         )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
     await log_action(
         db,
         action="Created New Vendor",
@@ -79,7 +80,9 @@ async def list_vendors(
 async def get_vendor(vendor_id: str, current_user: SuperAdminUser, db: DB):
     vendor = await vendor_service.get_vendor(db, vendor_id)
     if not vendor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     return vendor
 
 
@@ -94,8 +97,9 @@ async def update_vendor(
     ip = get_client_ip(request)
     vendor = await vendor_service.get_vendor(db, vendor_id)
     if not vendor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
-
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     vendor = await vendor_service.update_vendor(db, vendor, body)
     await log_action(
         db,
@@ -121,15 +125,20 @@ async def update_vendor_status(
     ip = get_client_ip(request)
     vendor = await vendor_service.get_vendor(db, vendor_id)
     if not vendor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
-
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     vendor = await vendor_service.update_vendor_status(db, vendor, body)
     action_label = (
         "Suspended Vendor Account"
         if body.status == VendorStatus.SUSPENDED
         else f"Updated Vendor Status to {body.status.value}"
     )
-    log_status = LogStatus.WARNING if body.status == VendorStatus.SUSPENDED else LogStatus.SUCCESS
+    log_status = (
+        LogStatus.WARNING
+        if body.status == VendorStatus.SUSPENDED
+        else LogStatus.SUCCESS
+    )
     await log_action(
         db,
         action=action_label,
@@ -153,8 +162,9 @@ async def delete_vendor(
     ip = get_client_ip(request)
     vendor = await vendor_service.get_vendor(db, vendor_id)
     if not vendor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
-
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
+        )
     name = vendor.business_name
     await vendor_service.delete_vendor(db, vendor)
     await log_action(

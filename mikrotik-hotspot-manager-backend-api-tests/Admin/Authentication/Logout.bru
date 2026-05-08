@@ -1,0 +1,21 @@
+meta {
+  name: Logout
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{local_url}}/auth/logout
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
+}
+
+body:json {
+  {
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZjEzMjU3NS01YWNiLTQzMDgtOWI3Ni04OWE1YTJjMzg1MjIiLCJyb2xlIjoic3VwZXJhZG1pbiIsImV4cCI6MTc3ODgxNjExMiwiaWF0IjoxNzc4MjExMzEyLCJqdGkiOiI1MWNjY2Y4OS0zNmI1LTRkMzUtOWFjYS1kOWNkNmRhZDgwNGQiLCJ0eXBlIjoicmVmcmVzaCJ9.Uw-WbCmtMKNHB3u_CKmzTAlf7PSMtaocDeryImB1dwk"
+  }
+}
