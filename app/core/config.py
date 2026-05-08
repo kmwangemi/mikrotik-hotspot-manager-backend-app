@@ -1,6 +1,5 @@
 from typing import List
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -9,13 +8,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "MikroTik Hotspot Manager"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "https://mikrotik-hotspot-manager.vercel.app",
-    ]
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,https://mikrotik-hotspot-manager.vercel.app"
+    )
     # Database
-    DATABASE_URL: str  # asyncpg — used by the app
-    SYNC_DATABASE_URL: str  # psycopg2 — used by Alembic only
+    DATABASE_URL: str
+    SYNC_DATABASE_URL: str
     BASE_URL: str = "http://localhost:8000"
     # JWT
     SECRET_KEY: str
@@ -41,12 +39,9 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str
     CLOUDINARY_API_SECRET: str
 
-    @field_validator("ALLOWED_ORIGINS", mode="before")
-    @classmethod
-    def parse_allowed_origins(cls, v: str | list) -> list:
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"
