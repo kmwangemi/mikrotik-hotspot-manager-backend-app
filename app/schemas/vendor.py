@@ -46,6 +46,7 @@ class VendorCreate(BaseModel):
 
 class VendorUpdate(BaseModel):
     business_name: Optional[str] = None
+    business_email: Optional[str] = None
     business_phone_number: Optional[str] = None
     subdomain: Optional[str] = None
     referral_code: Optional[str] = None
