@@ -1,13 +1,15 @@
 from typing import Annotated, Optional
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.core.enums import ROLE_PERMISSIONS, Permission, TokenType, UserRole
+from app.core.security import decode_token
 from app.db.session import get_db
 from app.models.user import User
-from app.core.security import decode_token
-from app.core.enums import TokenType, UserRole, Permission, ROLE_PERMISSIONS
 
 bearer_scheme = HTTPBearer(auto_error=True)
 
@@ -24,7 +26,9 @@ async def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(
+        select(User).options(selectinload(User.vendor)).where(User.id == user_id)
+    )
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(
@@ -79,6 +83,7 @@ def require_permission(permission: Permission):
                 detail=f"Permission '{permission.value}' required",
             )
         return current_user
+
     return check_permission
 
 

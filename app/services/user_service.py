@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password
 from app.models.user import User
-from app.schemas.user import UserUpdate
+from app.schemas.profile import ProfileUpdate
 
 
 async def get_user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
@@ -18,11 +18,40 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     return result.scalar_one_or_none()
 
 
-async def update_user_profile(db: AsyncSession, user: User, data: UserUpdate) -> User:
-    for field, value in data.model_dump(exclude_none=True).items():
-        setattr(user, field, value)
-    await db.flush()
-    return user
+async def update_profile(
+    db: AsyncSession,
+    current_user: User,
+    data: ProfileUpdate,
+) -> User:
+
+    # -----------------------------
+    # Update User Fields
+    # -----------------------------
+    if data.user:
+        user_data = data.user.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
+        for field, value in user_data.items():
+            setattr(current_user, field, value)
+    # -----------------------------
+    # Update Vendor Fields
+    # -----------------------------
+    if data.vendor:
+        if not current_user.vendor:
+            raise ValueError("User does not belong to a vendor")
+        vendor_data = data.vendor.model_dump(
+            exclude_unset=True,
+            exclude_none=True,
+        )
+        for field, value in vendor_data.items():
+            setattr(current_user.vendor, field, value)
+    await db.commit()
+    await db.refresh(
+        current_user,
+        attribute_names=["vendor"],
+    )
+    return current_user
 
 
 async def update_user_password(

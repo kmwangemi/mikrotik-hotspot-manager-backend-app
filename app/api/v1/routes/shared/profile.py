@@ -3,7 +3,8 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 from app.api.v1.dependencies.auth import DB, CurrentUser, get_client_ip
 from app.core.config import settings
 from app.core.enums import LogCategory, LogStatus
-from app.schemas.user import UserRead, UserUpdate
+from app.schemas.profile import ProfileUpdate
+from app.schemas.user import UserRead
 from app.services import user_service
 from app.services.cloudinary_service import (
     delete_profile_picture,
@@ -23,19 +24,23 @@ async def get_profile(current_user: CurrentUser):
 
 @router.patch("", response_model=UserRead)
 async def update_profile(
-    body: UserUpdate,
+    body: ProfileUpdate,
     current_user: CurrentUser,
     db: DB,
     request: Request,
 ):
     ip = get_client_ip(request)
-    user = await user_service.update_user_profile(db, current_user, body)
+    user = await user_service.update_profile(
+        db,
+        current_user,
+        body,
+    )
     await log_action(
         db,
         action="Updated Profile",
         category=LogCategory.PROFILE,
         status=LogStatus.SUCCESS,
-        details="Profile information updated",
+        details="User and vendor profile updated",
         user=current_user,
         ip_address=ip,
     )
